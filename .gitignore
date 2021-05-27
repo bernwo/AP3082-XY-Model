@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# test
+test.py
+test1.py
+test2.py
+test3.py
+test_timeit.py
+test.png
+test.pdf
+test.svg
+
+# deafult pictures
+Absolute_magnetisation.png
+Metropolis.gif
+Metropolis_*.png
