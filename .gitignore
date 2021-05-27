@@ -11,6 +11,8 @@ test.py
 test1.py
 test2.py
 test3.py
+test_wolff_numba_draft.py
+test_wolff_func_numba_draft.py
 test_wolff_numba.py
 test_wolff_func_numba.py
 test_timeit.py
