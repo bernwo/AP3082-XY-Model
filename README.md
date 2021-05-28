@@ -40,6 +40,6 @@ Now, let us look at the comparison of the phase space and the energy space side 
 
 ![L=64, τ=10000000, τ_n=1, T_i=0, T_f=0](simulation_images/Metropolis_phase_energy_L64_tau10000000_nrelax1_Tinit0_Tfinal0.webm)
 
-using the same side-by-side view, let us look at what happens if we lower the temperature slowly instead. Here, we begin with $`T=3T_c`$ and slowly lower the temperature down to $`T=0`$. In this scenario, it seems that the spins in the lattice relax slowly and steadily.
+Using the same side-by-side view, let us look at what happens if we lower the temperature slowly instead. Here, we begin with $`T=3T_c`$ and slowly lower the temperature down to $`T=0`$. In this scenario, it seems that the spins in the lattice relax slowly and steadily. Furthermore, no vortex/anti-vortex pairs remain when the system cools down.
 
 ![L=64, τ=10000000, τ_n=20, T_i=3, T_f=0](simulation_images/Metropolis_phase_energy_L64_tau10000000_nrelax20_Tinit3_Tfinal0.webm)
