@@ -28,6 +28,6 @@ This week, we have implemented the high-speed Metropolis algorithm using `NumPy`
 
 *Note: The $`T`$ in the plot title is in units of $`T_c`$. Thus, if it shows $`T`=1$, it means the system is at the critical temperature.*
 
-[L=256, τ=10000000](simulation_images/Metropolis_L256_tau10000000.mp4)
+![L=256, τ=10000000](simulation_images/Metropolis_L256_tau10000000.mp4)
 <!-- <img src="" width="360" height="307" /> -->
 where τ is the relaxation time, i.e. the number of metropolis iterations allocated for the system to equilibrate for a given temperature.
