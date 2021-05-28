@@ -39,3 +39,7 @@ Here, we see another animated `.webm`, where we begin with a completely random s
 Now, let us look at the comparison of the phase space and the energy space side by side for a given Metropolis run. Below, see that as we quench down to $`T=0`$ from a completely random lattice state, we stil see disorder begin present in the system. The disorders comes from the formation of vortice/anti-vortice pairs, which are not easily destroyed. We see that as the system evolves, the vortice annd anti-vortice pairs, revealed by their high energy in the energy plot, attract and annihilate each other. Given a long enough evolution time, all pairs will be annihilated and the system becomes ordered again, as it should be at $`T=0`$.
 
 ![L=64, τ=10000000, τ_n=1, T_i=0, T_f=0](simulation_images/Metropolis_phase_energy_L64_tau10000000_nrelax1_Tinit0_Tfinal0.webm)
+
+using the same side-by-side view, let us look at what happens if we lower the temperature slowly instead. Here, we begin with $`T=3T_c`$ and slowly lower the temperature down to $`T=0`$. In this scenario, it seems that the spins in the lattice relax slowly and steadily.
+
+![L=64, τ=10000000, τ_n=20, T_i=3, T_f=0](simulation_images/Metropolis_phase_energy_L64_tau10000000_nrelax20_Tinit3_Tfinal0.webm)
