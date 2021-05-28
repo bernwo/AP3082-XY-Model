@@ -24,8 +24,10 @@
 
 ## Journal: Week 1
 
-This week, we have implemented the high-speed Metropolis algorithm using `NumPy` and `Numba`. The evolution of the simulation can be seen in the animated `.gif` below, where we begin with a completely homogeneous lattice state, and slowly increase the temperature past the critical temperature $`T_c≈0.892937J/k_B`$, (see [here]([www.google.com](http://www.lps.ens.fr/~krauth/images/7/72/Stage_Mayer_Johannes_2015.pdf))).
+This week, we have implemented the high-speed Metropolis algorithm using `NumPy` and `Numba`. The evolution of the simulation can be seen in the animated `.gif` below, where we begin with a completely homogeneous lattice state, and slowly increase the temperature past the critical temperature $`T_c≈0.892937J/k_B`$, (see [here](http://www.lps.ens.fr/~krauth/images/7/72/Stage_Mayer_Johannes_2015.pdf))). 
 
-*Note: The $`T`$ in the plot title is in units of $`T_c`$.*
+*Note: The $`T`$ in the plot title is in units of $`T_c`$. Thus, if it shows $`T`=1$, it means the system is at the critical temperature.*
 
-<img src="simulation_images/Metropolis_L256_tau10000000.gif" width="360" height="307" />
+[L=256, τ=10000000](simulation_images/Metropolis_L256_tau10000000.mp4)
+<!-- <img src="" width="360" height="307" /> -->
+where τ is the relaxation time, i.e. the number of metropolis iterations allocated for the system to equilibrate for a given temperature.
