@@ -75,7 +75,7 @@ def get_energy_difference_with_trial_state(J, L, i, j, new_phi, lattice):
 
 @jit(nopython=True)
 def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
-                           T_init, T_final, T_n, new_phi):
+                           T_init, T_final, T_n):
     """
     Applies the XY-model Metropolis evolution algorithm at temperature T_init to a given input lattice of size L×L, where each of the spins takes on value ranging from -π to π.
     After relaxation_time number of time-steps, the temperature of the system changes until we run for the final time for T_final. This is why the function is labelled slow quench.
@@ -106,9 +106,7 @@ def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
         T_n: int
             The number of points between T_init and T_final, inclusive.
         
-        new_phi: np.ndarray (float)
-            A numpy array containing N uniformly generated numbers ranging from -π to π, where N = relaxation_time * T_n.
-        
+
     Returns
     -------
         lattices_tau: np.ndarray (float)
@@ -131,21 +129,22 @@ def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
     T_counter = 0
     for Nth_run in range(N):
         i, j = rand_2D_indices(L)
+        new_phi = (2*np.pi)*np.random.rand()-np.pi
         dE = get_energy_difference_with_trial_state(J, L, i, j,
-                                                    new_phi[Nth_run], lattice)
+                                                    new_phi, lattice)
         if not (Nth_run == 0) and ((Nth_run % relaxation_time == 0) or
                                    (Nth_run == N - 1)):
             lattices_tau[T_counter, :, :] = lattice
             T_counter = T_counter + 1
         if (dE <= 0):
-            lattice[i, j] = new_phi[Nth_run]
+            lattice[i, j] = new_phi
         else:
             r = np.random.rand()
             W = np.exp(
                 -1 / T_array[T_counter] *
                 dE) if T_array[T_counter] > 0 else 0  # T is in units of kB
             if (r < W):
-                lattice[i, j] = new_phi[Nth_run]
+                lattice[i, j] = new_phi
         if Nth_run in plot_at_Nth_index:
             lattices_plot[np.where(
                 plot_at_Nth_index == Nth_run)[0][0], :, :] = lattice

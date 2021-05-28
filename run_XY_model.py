@@ -16,7 +16,6 @@ lattice = np.zeros((L, L))
 
 Tc = 0.892937 * J  # http://www.lps.ens.fr/~krauth/images/7/72/Stage_Mayer_Johannes_2015.pdf in units of kB
 
-new_phi = np.random.uniform(low=-np.pi, high=np.pi, size=N)
 lattices_relax, lattices_plot, T_history = Metropolis_slow_quench(
     J=J,
     L=L,
@@ -25,8 +24,7 @@ lattices_relax, lattices_plot, T_history = Metropolis_slow_quench(
     lattice=lattice,
     T_init=0,
     T_final=2 * Tc,
-    T_n=nrelax,
-    new_phi=new_phi)
+    T_n=nrelax)
 creategif(J=J,
           L=L,
           T=T_history,
