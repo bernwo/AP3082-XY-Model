@@ -32,6 +32,6 @@ This week, we have implemented the high-speed Metropolis algorithm using `NumPy`
 <!-- <img src="" width="360" height="307" /> -->
 where τ is the relaxation time, i.e. the number of metropolis iterations allocated for the system to equilibrate for a given temperature. $`\tau_n`$ is the number of temperature points between the initial temperature $`T_i`$ and the final temperature $`T_f`$.
 
-Here, we see another animated `.webm`, where we begin with a completely random spin lattice, and immediately quench the system to $`T=0`$ with 100000000 iterations.
+Here, we see another animated `.webm`, where we begin with a completely random spin lattice, and immediately quench the system to $`T=0`$ with 100000000 iterations. We see that if we quench down to $`T=0`$, pairs of vortices and anti-vortices spontaneously form, where these pairs will eventually collide and annihilate each other.
 
 ![L=256, τ=100000000, τ_n=1, T_i=0, T_f=0](simulation_images/Metropolis_L256_tau100000000_nrelax1_Tinit0_Tfinal0.webm)
