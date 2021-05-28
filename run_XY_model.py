@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 J = 1
 L = 256
 
-tau = 1000000 # relaxation time a.k.a equilibrating time
-nrelax = 10 # total number of times to let the system equilibrate
-nframes = 21 # total number of frames in the .gif over the whole simulation
+tau = 10000000 # relaxation time a.k.a equilibrating time
+nrelax = 25 # total number of times to let the system equilibrate
+nframes = 301 # total number of frames in the .gif over the whole simulation
 N = nrelax * tau # total number of iterations in the Metropolis algorithm
 plot_at_Nth_index = np.linspace(0, N - 1, nframes).astype('int')
 
@@ -31,7 +31,7 @@ creategif(J=J,
           L=L,
           T=T_history,
           plot_at_Nth_index=plot_at_Nth_index,
-          lattices=lattices_plot,
+          lattices_plot=lattices_plot,
           filename="simulation_images/Metropolis.gif")
 
 plt.close()
