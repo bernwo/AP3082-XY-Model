@@ -11,7 +11,6 @@ def get_squared_magnetisation(L, T_n, lattices_relax):
     M2 = M2 / np.power(L, 4)
     return M2
 
-@jit(nopython=True)
 def get_energy(J, T_n, lattices_relax):
     E = np.zeros(T_n)
     for i in range(T_n):
@@ -26,7 +25,6 @@ def get_energy(J, T_n, lattices_relax):
                                np.roll(lattices_relax[i, :, :], -1, axis=1))))
     return E
 
-@jit(nopython=True)
 def get_squared_energy(J, T_n, lattices_relax):
     E2 = np.zeros(T_n)
     for i in range(T_n):
@@ -40,3 +38,9 @@ def get_squared_energy(J, T_n, lattices_relax):
                    np.cos(lattices_relax[i, :, :] -
                           np.roll(lattices_relax[i, :, :], -1, axis=1))))**2)
     return E2
+
+def get_specificheat(J, T_n, lattices_relax, T):
+       E2 = get_squared_energy(J, T_n, lattices_relax)
+       E = get_energy(J, T_n, lattices_relax)
+       c = (E2-E**2)/((T**2)) if T>0 else 0
+       return c
