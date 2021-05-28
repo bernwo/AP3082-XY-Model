@@ -42,5 +42,5 @@ def get_squared_energy(J, T_n, lattices_relax):
 def get_specificheat(J, T_n, lattices_relax, T):
        E2 = get_squared_energy(J, T_n, lattices_relax)
        E = get_energy(J, T_n, lattices_relax)
-       c = (E2-E**2)/((T**2)) if T>0 else 0
+       c = (E2-E**2)/((T**2))
        return c
