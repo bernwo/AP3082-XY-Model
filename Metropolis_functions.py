@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 from numba import jit  # sudo pip3 install numba
 import io
 import imageio  # sudo pip3 install imageio
-
+from Observables import get_energy_per_spin_per_lattice
 """
 This file contains functions for high speed Metropolis algorithm computation for the 2D XY-model using NumPy and Numba.
 """
+
 
 @jit(nopython=True)
 def rand_2D_indices(L):
@@ -73,6 +74,7 @@ def get_energy_difference_with_trial_state(J, L, i, j, new_phi, lattice):
     dE = -J * (new - old)
     return dE
 
+
 @jit(nopython=True)
 def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
                            T_init, T_final, T_n):
@@ -129,9 +131,9 @@ def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
     T_counter = 0
     for Nth_run in range(N):
         i, j = rand_2D_indices(L)
-        new_phi = (2*np.pi)*np.random.rand()-np.pi
-        dE = get_energy_difference_with_trial_state(J, L, i, j,
-                                                    new_phi, lattice)
+        new_phi = (2 * np.pi) * np.random.rand() - np.pi
+        dE = get_energy_difference_with_trial_state(J, L, i, j, new_phi,
+                                                    lattice)
         if not (Nth_run == 0) and ((Nth_run % relaxation_time == 0) or
                                    (Nth_run == N - 1)):
             lattices_tau[T_counter, :, :] = lattice
@@ -153,7 +155,7 @@ def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
     return lattices_tau, lattices_plot, T_history
 
 
-def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename):
+def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename, plot_mode):
     """
     Creates an animated .gif of the evolution of the lattice in θ∈[-π,π) space. No temporary files are created as we are utilising RAM.
 
@@ -173,23 +175,101 @@ def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename):
         
         filename: string
             Specifies the filename of the .gif to be saved.
-    
+
+        plot_mode: string
+            Specifies the type of animated .gif plot to be produced. The possible options are:
+            1.) phase_space_noarrows
+            2.) phase_space_arrows
+            3.) energy_space_arrows
+            4.) phase_and_energy_spaces_arrows
+
     Returns
     -------
         None
     """
+    assert (plot_mode == 'phase_space_noarrows') or (
+        plot_mode
+        == 'phase_space_arrows') or (plot_mode == 'energy_space_arrows') or (
+            plot_mode == 'phase_and_energy_spaces_arrows')
+    X, Y = np.mgrid[0:L, 0:L]
     with imageio.get_writer(filename, mode='I') as writer:
         for counter, i in enumerate(plot_at_Nth_index):
             print(
                 f"Creating gif... {np.round((counter+1)/len(plot_at_Nth_index)*100,2)}%"
             )
-            plt.imshow(lattices_plot[counter, :, :], cmap='hsv')
-            plt.clim(-np.pi, np.pi)
-            plt.colorbar(ticks=[-np.pi, 0, np.pi])
-            plt.title(
-                f"Run #{i}. $J$={J}. $T$={np.round(T[counter],2)}. $L$={L}.")
-            plt.xlabel("$x$")
-            plt.ylabel("$y$")
+            if plot_mode == 'phase_space_noarrows':
+                plt.imshow(lattices_plot[counter, :, :], cmap='hsv')
+                plt.clim(-np.pi, np.pi)
+                plt.colorbar(ticks=[-np.pi, 0, np.pi])
+            elif plot_mode == 'phase_space_arrows':
+                U, V = np.cos(lattices_plot[counter, :, :].T), np.sin(
+                    lattices_plot[counter, :, :].T)
+                plt.quiver(X,
+                           Y,
+                           U,
+                           V,
+                           edgecolor='k',
+                           facecolor='None',
+                           linewidth=.5)
+                plt.imshow(lattices_plot[counter, :, :], cmap='hsv')
+                plt.clim(-np.pi, np.pi)
+                plt.colorbar(ticks=[-np.pi, 0, np.pi])
+            elif plot_mode == 'energy_space_arrows':
+                U, V = np.cos(lattices_plot[counter, :, :].T), np.sin(
+                    lattices_plot[counter, :, :].T)
+                E = get_energy_per_spin_per_lattice(
+                    J, lattices_plot[counter, :, :])
+                plt.quiver(X,
+                           Y,
+                           U,
+                           V,
+                           edgecolor='k',
+                           facecolor='None',
+                           linewidth=.5)
+                plt.imshow(E, cmap='YlOrRd')
+                plt.clim(-4, 0)
+                plt.colorbar(ticks=[-4, -2, 0])
+            elif plot_mode == 'phase_and_energy_spaces_arrows':
+                U, V = np.cos(lattices_plot[counter, :, :].T), np.sin(
+                    lattices_plot[counter, :, :].T)
+                E = get_energy_per_spin_per_lattice(
+                    J, lattices_plot[counter, :, :])
+                fig = plt.figure(figsize=(10, 3.7))
+                ax1 = fig.add_subplot(121)
+                ax2 = fig.add_subplot(122)
+
+                ax1.quiver(X,
+                           Y,
+                           U,
+                           V,
+                           edgecolor='k',
+                           facecolor='None',
+                           linewidth=.5)
+                im1 = ax1.imshow(lattices_plot[counter, :, :],
+                                 vmin=-np.pi,
+                                 vmax=np.pi,
+                                 cmap='hsv')
+                fig.colorbar(im1, ticks=[-3.14, 0, 3.14], ax=ax1)
+                ax1.set_title("Phase space, $θ\in(-\pi,\pi)$")
+
+                ax2.quiver(X,
+                           Y,
+                           U,
+                           V,
+                           edgecolor='k',
+                           facecolor='None',
+                           linewidth=.5)
+                im2 = ax2.imshow(E, vmin=-4, vmax=0, cmap='YlOrRd')
+                fig.colorbar(im2, ticks=[-4, -2, 0], ax=ax2)
+                ax2.set_title("Energy, $E$")
+            if plot_mode != 'phase_and_energy_spaces_arrows':
+                plt.title(
+                    f"Run #{i}. $J$={J}. $T$={np.round(T[counter],2)}. $L$={L}."
+                )
+            else:
+                fig.suptitle(
+                    f"Run #{i}. $J$={J}. $T$={np.round(T[counter],2)}. $L$={L}."
+                )
             buf = io.BytesIO()
             plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
             buf.seek(0)
