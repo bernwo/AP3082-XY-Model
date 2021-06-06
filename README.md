@@ -60,7 +60,7 @@ Below, we find the results for these two observables for the following simulatio
 * extra time, $`\tau_\mathrm{extra}=\tau`$
 * initial temperature $`T_\mathrm{init}=0.2T_c`$
 * final temperature $`T_\mathrm{final}=2.0T_c`$
-* number of points between $`T_\mathrm{init}`$ and $`T_\mathrm{final}`$, $`\tau_n=15`$
+* number of points between $`T_\mathrm{init}`$ and $`T_\mathrm{final}`$, $`\tau_n=100`$
 * coupling constant, $`J=1`$
 
 **Note**: The observables were calculated by averaging over a temporal ensemble in the time-range after the equilibrating time, i.e. the *extra time*, τ_extra.
