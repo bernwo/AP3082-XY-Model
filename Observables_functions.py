@@ -47,13 +47,13 @@ def get_energy(J, L, lattice):
 	e_down = np.cos(lattice - lattice[a - 1, :])
 	e_up = np.cos(lattice - lattice[a - (L - 1), :])
 
-	e = -J * (e_right + e_left + e_down + e_up)
+	e = -J/2 * (e_right + e_left + e_down + e_up)
 	E = np.sum(e)
 	return E
 
 def get_energy_per_spin_per_lattice(J, lattice):
 	"""
-	Calculates and returns the energy sum over the lattice.
+	Calculates and returns the energy of each spin in the lattice.
 
 	Parameters
 	----------
