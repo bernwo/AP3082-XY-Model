@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from numba import jit  # sudo pip3 install numba
 import io
 import imageio  # sudo pip3 install imageio
-from Observables import get_energy_per_spin_per_lattice, get_energy, get_magnetisation_squared
+from Observables_functions import get_energy_per_spin_per_lattice, get_energy, get_magnetisation_squared
 """
 This file contains functions for Metropolis algorithm computation for the 2D XY-model using NumPy and Numba.
 """
