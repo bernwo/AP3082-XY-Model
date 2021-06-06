@@ -44,7 +44,6 @@ Using the same side-by-side view, let us look at what happens if we lower the te
 
 ![L=64, τ=10000000, τ_n=20, T_i=3, T_f=0](simulation_images/Metropolis_phase_energy_L64_tau10000000_nrelax20_Tinit3_Tfinal0.webm)
 
-
 ## Journal: Week 2
 
 This week, we incorporated the observable calculations into the `Metropolis()` python function itself. The incorporated observables are the followings
