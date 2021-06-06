@@ -1,72 +1,75 @@
 import numpy as np
 from numba import jit
 
-
 @jit(nopython=True)
-def get_squared_magnetisation(L, T_n, lattices_relax):
-    M2 = np.zeros(T_n)
-    for i in range(T_n):
-        M2[i] = np.sum(np.cos(lattices_relax[i,:,:]))**2 \
-                 + np.sum(np.sin(lattices_relax[i,:,:]))**2
-    M2 = M2 / np.power(L, 4)
+def get_magnetisation_squared(lattice):
+    """
+    Calculates and returns the magnetisation squared sum over the lattice.
+
+    Parameters
+    ----------
+        lattice: np.ndarray (float)
+            The input lattice containing L×L spins.
+    
+    Returns
+    -------
+        M2: float
+            Magnetisation squared sum over the lattice.
+    """
+    M2 = np.sum(np.cos(lattice))**2 + np.sum(np.sin(lattice))**2
     return M2
 
+@jit(nopython=True)
+def get_energy(J, L, lattice):
+	"""
+	Calculates and returns the energy sum over the lattice.
 
-def get_energy_per_spin(L, J, T_n, lattices_relax):
-    E = np.zeros((T_n, L, L))
-    for i in range(T_n):
-        E[i, :, :] = -J * (
-            np.cos(lattices_relax[i, :, :] -
-                   np.roll(lattices_relax[i, :, :], 1, axis=0)) +
-            np.cos(lattices_relax[i, :, :] -
-                   np.roll(lattices_relax[i, :, :], -1, axis=0)) +
-            np.cos(lattices_relax[i, :, :] -
-                   np.roll(lattices_relax[i, :, :], 1, axis=1)) +
-            np.cos(lattices_relax[i, :, :] -
-                   np.roll(lattices_relax[i, :, :], -1, axis=1)))
-    return E
+    Parameters
+    ----------
+		J: float
+            Coupling constant. It must follow that J>0 such that we are studying the ferromagnetic XY-model.
+        
+        L: int
+            Lattice size where the total number of spins is given by L×L.
+		
+        lattice: np.ndarray (float)
+            The input lattice containing L×L spins.
+    
+    Returns
+    -------
+        E: float
+            Energy sum over the lattice.
+	"""
+	a = np.arange(0, L, 1, dtype=np.int32)
 
+	e_right = np.cos(lattice - lattice[:, a - 1])
+	e_left = np.cos(lattice - lattice[:, a - (L - 1)])
+	e_down = np.cos(lattice - lattice[a - 1, :])
+	e_up = np.cos(lattice - lattice[a - (L - 1), :])
 
-def get_energy_per_spin_per_lattice(J, lattice_relax):
-    E = -J * (np.cos(lattice_relax - np.roll(lattice_relax, 1, axis=0)) +
-              np.cos(lattice_relax - np.roll(lattice_relax, -1, axis=0)) +
-              np.cos(lattice_relax - np.roll(lattice_relax, 1, axis=1)) +
-              np.cos(lattice_relax - np.roll(lattice_relax, -1, axis=1)))
-    return E
+	e = -J * (e_right + e_left + e_down + e_up)
+	E = np.sum(e)
+	return E
 
+def get_energy_per_spin_per_lattice(J, lattice):
+	"""
+	Calculates and returns the energy sum over the lattice.
 
-def get_energy(J, T_n, lattices_relax):
-    E = np.zeros(T_n)
-    for i in range(T_n):
-        E[i] = np.mean(-J *
-                       (np.cos(lattices_relax[i, :, :] -
-                               np.roll(lattices_relax[i, :, :], 1, axis=0)) +
-                        np.cos(lattices_relax[i, :, :] -
-                               np.roll(lattices_relax[i, :, :], -1, axis=0)) +
-                        np.cos(lattices_relax[i, :, :] -
-                               np.roll(lattices_relax[i, :, :], 1, axis=1)) +
-                        np.cos(lattices_relax[i, :, :] -
-                               np.roll(lattices_relax[i, :, :], -1, axis=1))))
-    return E
+	Parameters
+	----------
+		J: float
+			Coupling constant. It must follow that J>0 such that we are studying the ferromagnetic XY-model.
+		
+		lattice: np.ndarray (float)
+			The input lattice containing L×L spins.
 
-
-def get_squared_energy(J, T_n, lattices_relax):
-    E2 = np.zeros(T_n)
-    for i in range(T_n):
-        E2[i] = np.mean(
-            (-J * (np.cos(lattices_relax[i, :, :] -
-                          np.roll(lattices_relax[i, :, :], 1, axis=0)) +
-                   np.cos(lattices_relax[i, :, :] -
-                          np.roll(lattices_relax[i, :, :], -1, axis=0)) +
-                   np.cos(lattices_relax[i, :, :] -
-                          np.roll(lattices_relax[i, :, :], 1, axis=1)) +
-                   np.cos(lattices_relax[i, :, :] -
-                          np.roll(lattices_relax[i, :, :], -1, axis=1))))**2)
-    return E2
-
-
-def get_specificheat(J, T_n, lattices_relax, T):
-    E2 = get_squared_energy(J, T_n, lattices_relax)
-    E = get_energy(J, T_n, lattices_relax)
-    c = (E2 - E**2) / ((T**2))
-    return c
+	Returns
+	-------
+		E: np.ndarray (float)
+			Energy of each spin in the lattice.
+	"""
+	E = -J * (np.cos(lattice - np.roll(lattice, 1, axis=0)) +
+				np.cos(lattice - np.roll(lattice, -1, axis=0)) +
+				np.cos(lattice - np.roll(lattice, 1, axis=1)) +
+				np.cos(lattice - np.roll(lattice, -1, axis=1)))
+	return E
