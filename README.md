@@ -63,6 +63,8 @@ Below, we find the results for these two observables for the following simulatio
 * number of points between $`T_\mathrm{init}`$ and $`T_\mathrm{final}`$, $`\tau_n=15`$
 * coupling constant, $`J=1`$
 
+**Note**: The observables were calculated by averaging over a temporal ensemble in the time-range after the equilibrating time, i.e. the *extra time*, τ_extra.
+
 ### Results: *Normalised* magnetisation squared
 
 Using the set-up as described above, we obtain the following result for the normalised magnetisation squared.
