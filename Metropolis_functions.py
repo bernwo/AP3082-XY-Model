@@ -3,11 +3,10 @@ import matplotlib.pyplot as plt
 from numba import jit  # sudo pip3 install numba
 import io
 import imageio  # sudo pip3 install imageio
-from Observables import get_energy_per_spin_per_lattice
+from Observables import get_energy_per_spin_per_lattice, get_energy, get_magnetisation_squared
 """
-This file contains functions for high speed Metropolis algorithm computation for the 2D XY-model using NumPy and Numba.
+This file contains functions for Metropolis algorithm computation for the 2D XY-model using NumPy and Numba.
 """
-
 
 @jit(nopython=True)
 def rand_2D_indices(L):
@@ -39,7 +38,7 @@ def get_energy_difference_with_trial_state(J, L, i, j, new_phi, lattice):
     Parameters
     ----------
         J: float
-            Coupling constant. It must follow that J>0 such that we are studying the ferromagnteic XY-model.
+            Coupling constant. It must follow that J>0 such that we are studying the ferromagnetic XY-model.
         
         L: int
             Lattice size where the total number of spins is given by L×L.
@@ -74,10 +73,22 @@ def get_energy_difference_with_trial_state(J, L, i, j, new_phi, lattice):
     dE = -J * (new - old)
     return dE
 
+@jit(nopython=True)
+def Metropolis_single_iteration(J, L, lattice, T):
+    i, j = rand_2D_indices(L)
+    new_phi = (2 * np.pi) * np.random.rand() - np.pi
+    dE = get_energy_difference_with_trial_state(J, L, i, j, new_phi, lattice)
+    if (dE <= 0):
+        lattice[i, j] = new_phi
+    else:
+        r = np.random.rand()
+        W = np.exp(-1 / T * dE)  # T is in units of kB
+        if (r < W):
+            lattice[i, j] = new_phi
 
 @jit(nopython=True)
-def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
-                           T_init, T_final, T_n):
+def Metropolis(J, L, relaxation_time, extra_time, lattice,
+                           T_init, T_final, T_n, plot_at_Nth_index, save_for_plot=False):
     """
     Applies the XY-model Metropolis evolution algorithm at temperature T_init to a given input lattice of size L×L, where each of the spins takes on value ranging from -π to π.
     After relaxation_time number of time-steps, the temperature of the system changes until we run for the final time for T_final. This is why the function is labelled slow quench.
@@ -85,16 +96,13 @@ def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
     Parameters
     ----------
         J: float
-            Coupling constant. It must follow that J>0 such that we are studying the ferromagnteic XY-model.
+            Coupling constant. It must follow that J>0 such that we are studying the ferromagnetic XY-model.
         
         L: int
             Lattice size where the total number of spins is given by L×L.
         
         relaxation_time: int
             The number of Metropolis evolution time-steps one applies to the lattice for a given temperature T before changing the temperature.
-        
-        plot_at_Nth_index: np.ndarray (int)
-            Specifies at which Metropolis evolution time-steps to save the lattice snapshot for plotting purposes.
         
         lattice: np.ndarray (float)
             The input lattice containing L×L spins.
@@ -108,7 +116,9 @@ def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
         T_n: int
             The number of points between T_init and T_final, inclusive.
         
-
+        plot_at_Nth_index: np.ndarray (int)
+            Specifies at which Metropolis evolution time-steps to save the lattice snapshot for plotting purposes.
+        
     Returns
     -------
         lattices_tau: np.ndarray (float)
@@ -123,36 +133,38 @@ def Metropolis_slow_quench(J, L, relaxation_time, plot_at_Nth_index, lattice,
             A numpy array of shape (len(plot_at_Nth_index),). It stores the temperature of the system at time-steps specified by plot_at_Nth_index.
             This is used for plotting the evolution of the lattice.
     """
-    N = relaxation_time * T_n
     T_array = np.linspace(T_init, T_final, T_n)  # In units of kB
-    lattices_plot = np.zeros((len(plot_at_Nth_index), L, L))
-    lattices_tau = np.zeros((T_n, L, L))
-    T_history = np.zeros(len(plot_at_Nth_index))
-    T_counter = 0
-    for Nth_run in range(N):
-        i, j = rand_2D_indices(L)
-        new_phi = (2 * np.pi) * np.random.rand() - np.pi
-        dE = get_energy_difference_with_trial_state(J, L, i, j, new_phi,
-                                                    lattice)
-        if not (Nth_run == 0) and ((Nth_run % relaxation_time == 0) or
-                                   (Nth_run == N - 1)):
-            lattices_tau[T_counter, :, :] = lattice
-            T_counter = T_counter + 1
-        if (dE <= 0):
-            lattice[i, j] = new_phi
-        else:
-            r = np.random.rand()
-            W = np.exp(
-                -1 / T_array[T_counter] *
-                dE) if T_array[T_counter] > 0 else 0  # T is in units of kB
-            if (r < W):
-                lattice[i, j] = new_phi
-        if Nth_run in plot_at_Nth_index:
+    ave_M2 = np.zeros(T_n)
+    ave_E = np.zeros(T_n)
+    ave_E2 = np.zeros(T_n)
+    total_counter = 0
+
+    if save_for_plot:
+        lattices_plot = np.zeros((len(plot_at_Nth_index), L, L))
+        T_history = np.zeros(len(plot_at_Nth_index))
+
+    for a in range(T_n):
+        for b in range(relaxation_time):
+            Metropolis_single_iteration(J, L, lattice, T_array[a])
+        for c in range(extra_time):
+            Metropolis_single_iteration(J, L, lattice, T_array[a])
+            E = get_energy(J, L,lattice)
+            ave_E2[a] += E**2
+            ave_E[a] += E
+            ave_M2[a] += get_magnetisation_squared(lattice)
+
+        if save_for_plot and (total_counter in plot_at_Nth_index):
             lattices_plot[np.where(
-                plot_at_Nth_index == Nth_run)[0][0], :, :] = lattice
+                plot_at_Nth_index == total_counter)[0][0], :, :] = lattice
             T_history[np.where(
-                plot_at_Nth_index == Nth_run)[0][0]] = T_array[T_counter]
-    return lattices_tau, lattices_plot, T_history
+                plot_at_Nth_index == total_counter)[0][0]] = T_array[a]
+        total_counter += 1
+
+    ave_M2 = ave_M2/(extra_time*L**4)
+    ave_E2 = ave_E2/(extra_time*4)
+    ave_E = (ave_E/(extra_time*2))**2
+    Cv = (ave_E2-ave_E)
+    return ave_M2, Cv, lattices_plot, T_history
 
 
 def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename, plot_mode):
@@ -162,7 +174,7 @@ def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename, plot_mode):
     Parameters
     ----------
         J: float
-            Coupling constant. It must follow that J>0 such that we are studying the ferromagnteic XY-model.
+            Coupling constant. It must follow that J>0 such that we are studying the ferromagnetic XY-model.
         
         L: int
             Lattice size where the total number of spins is given by L×L.
