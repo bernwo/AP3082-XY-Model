@@ -69,7 +69,7 @@ Below, we find the results for these two observables for the following simulatio
 
 Using the set-up as described above, we obtain the following result for the normalised magnetisation squared.
 
-![Normalised magnetisation squared, L=25, τ=100000, τ_extra=4τ, τ_n=15, T_i=0.4T_c, T_f=2.0T_c](simulation_images/magnetisationsquared_L25_tau100000_nrelax15_Tinit0_Tfinal2.png)
+![Normalised magnetisation squared, L=30, τ=500000, τ_extra=τ, τ_n=100, T_i=0.2T_c, T_f=2.0T_c](simulation_images/magnetisationsquared_L30_tau500000_nrelax100_Tinit0_Tfinal2.png)
 
 From the [wikipedia page for XY model](https://en.wikipedia.org/wiki/Classical_XY_model), we see the results for the same system size $`L`$.
 
@@ -81,7 +81,7 @@ By comparing the two images, we see that they are somewhat similar with some min
 
 Using the set-up as described above, we obtain the following result for the specific heat capacity per spin.
 
-![Specific heat capacity per spin, L=25, τ=100000, τ_extra=4τ, τ_n=15, T_i=0.4T_c, T_f=2.0T_c](simulation_images/specificheat_L25_tau100000_nrelax15_Tinit0_Tfinal2.png)
+![Specific heat capacity per spin, L=30, τ=500000, τ_extra=τ, τ_n=100, T_i=0.2T_c, T_f=2.0T_c](simulation_images/specificheat_L30_tau500000_nrelax100_Tinit0_Tfinal2.png)
 
 From the [wikipedia page for XY model](https://en.wikipedia.org/wiki/Classical_XY_model), we see the results for the same system size $`L`$.
 

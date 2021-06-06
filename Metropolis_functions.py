@@ -75,6 +75,27 @@ def get_energy_difference_with_trial_state(J, L, i, j, new_phi, lattice):
 
 @jit(nopython=True)
 def Metropolis_single_iteration(J, L, lattice, T):
+    """
+    A single iteration of the Metropolis algorithm. It mutates the numpy array feed into this function.
+
+    Parameters
+    ----------
+        J: float
+            Coupling constant. It must follow that J>0 such that we are studying the ferromagnetic XY-model.
+        
+        L: int
+            Lattice size where the total number of spins is given by L×L.
+        
+        lattice: np.ndarray (float)
+            The input lattice containing L×L spins.
+
+        T: float
+            The temperature of the system in units of kB.
+
+    Returns
+    -------
+        None
+    """
     i, j = rand_2D_indices(L)
     new_phi = (2 * np.pi) * np.random.rand() - np.pi
     dE = get_energy_difference_with_trial_state(J, L, i, j, new_phi, lattice)
@@ -139,6 +160,9 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
     ave_E2 = np.zeros(T_n)
     total_counter = 0
 
+    reduced_interval   = int(L**2/2)
+    reduced_extra_time = int( np.ceil(extra_time/reduced_interval) )
+
     if save_for_plot:
         lattices_plot = np.zeros((len(plot_at_Nth_index), L, L))
         T_history = np.zeros(len(plot_at_Nth_index))
@@ -148,10 +172,11 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
             Metropolis_single_iteration(J, L, lattice, T_array[a])
         for c in range(extra_time):
             Metropolis_single_iteration(J, L, lattice, T_array[a])
-            E = get_energy(J, L,lattice)
-            ave_E2[a] += E**2
-            ave_E[a] += E
-            ave_M2[a] += get_magnetisation_squared(lattice)
+            if not(c==0) and (c%reduced_interval==0 or c==extra_time-1):
+                E = get_energy(J, L, lattice)
+                ave_E2[a] += E**2
+                ave_E[a] += E
+                ave_M2[a] += get_magnetisation_squared(lattice)
 
         if save_for_plot and (total_counter in plot_at_Nth_index):
             lattices_plot[np.where(
@@ -160,9 +185,9 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
                 plot_at_Nth_index == total_counter)[0][0]] = T_array[a]
         total_counter += 1
 
-    ave_M2 = ave_M2/(extra_time*L**4)
-    ave_E2 = ave_E2/(extra_time*4)
-    ave_E = (ave_E/(extra_time*2))**2
+    ave_M2 = ave_M2/(reduced_extra_time*L**4)
+    ave_E2 = ave_E2/(reduced_extra_time)
+    ave_E = (ave_E/(reduced_extra_time))**2
     Cv = (ave_E2-ave_E)
     return ave_M2, Cv, lattices_plot, T_history
 
