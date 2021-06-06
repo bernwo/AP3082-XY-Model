@@ -55,10 +55,10 @@ The calculation of the observables can be seen in `Observables.ipynb`.
 
 Below, we find the results for these two observables for the following simulation **set-up**:
 
-* system size, $`L=25`$.
-* equilibrating time, $`\tau=100000`$
-* extra time, $`\tau_\mathrm{extra}=4\tau`$
-* initial temperature $`T_\mathrm{init}=0.4T_c`$
+* system size, $`L=30`$.
+* equilibrating time, $`\tau=500000`$
+* extra time, $`\tau_\mathrm{extra}=\tau`$
+* initial temperature $`T_\mathrm{init}=0.2T_c`$
 * final temperature $`T_\mathrm{final}=2.0T_c`$
 * number of points between $`T_\mathrm{init}`$ and $`T_\mathrm{final}`$, $`\tau_n=15`$
 * coupling constant, $`J=1`$
