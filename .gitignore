@@ -7,10 +7,11 @@ __pycache__/
 *.so
 
 # test
-test.ipnyb
-test1.ipnyb
-test2.ipnyb
-test3.ipnyb
+test_images/
+test.ipynb
+test1.ipynb
+test2.ipynb
+test3.ipynb
 test.py
 test1.py
 test2.py
