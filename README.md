@@ -88,3 +88,20 @@ From the [wikipedia page for XY model](https://en.wikipedia.org/wiki/Classical_X
 ![Specific heat capacity per spin](simulation_images/specificheat_wikipedia.png)
 
 Again, by comparing the two images, we see that they are somewhat similar with some minor differences. This can be attributed to insufficient equilibrating time or extra time.
+
+### Invaded cluster algorithm
+
+The [invaded cluster algorithm](https://arxiv.org/pdf/cond-mat/9507094.pdf) can be useful for simulating the critical point the xy model.
+It is based on the idea of [percolation](https://www.uio.no/studier/emner/matnat/fys/FYS4460/v20/notes/book.pdf).
+The procedure of a single alogorithm itarion is as follows:
+* Generate a random unit vector $`\hat n`$ in 2D.
+* Create a cluster with a single element at every point in the lattice, i.e. $` s_i`$.
+* Check if a cluster and one random neighbor are aligned, that is, $`s_i\cdot\hat n s_j\cdot\hat n > 0 `$.
+* If so, add them to the cluster with probability $`P(\beta) = 1 -e^{-J\beta}`$.
+* Continue this process until a single cluster spans the lattice, i.e. crosses from left to right or top bottom.
+* Flip all clusters with probability 1/2 with respect to $`\hat n`$.
+We start from an anbitrary temperature $`T`$, and by allowing the system to relax and measuring the new temperature, we update the system. Ultimately, one obtains the critical temperature of the system without any a pripori knowledge.
+
+We have implemented the evolution rule for the cluster formation and percolation. In the following video one can observe a lattice percolation model of size $`L=100`$ and probability $`p=0.8`$. We are finishing the details on the xy model implementation.
+
+![L=100, p=0.8](simulation_images/percolation.mp4)
