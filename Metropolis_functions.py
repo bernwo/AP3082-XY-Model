@@ -108,6 +108,14 @@ def Metropolis_single_iteration(J, L, lattice, T):
             lattice[i, j] = new_phi
 
 @jit(nopython=True)
+def store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, T_history, T):
+    if save_for_plot and (total_counter in plot_at_Nth_index):
+        lattices_plot[np.where(
+            plot_at_Nth_index == total_counter)[0][0], :, :] = lattice
+        T_history[np.where(
+            plot_at_Nth_index == total_counter)[0][0]] = T
+
+@jit(nopython=True)
 def Metropolis(J, L, relaxation_time, extra_time, lattice,
                            T_init, T_final, T_n, plot_at_Nth_index, save_for_plot=False):
     """
@@ -170,6 +178,8 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
     for a in range(T_n):
         for b in range(relaxation_time):
             Metropolis_single_iteration(J, L, lattice, T_array[a])
+            store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, T_history, T_array[a])
+            total_counter += 1
         for c in range(extra_time):
             Metropolis_single_iteration(J, L, lattice, T_array[a])
             if not(c==0) and (c%reduced_interval==0 or c==extra_time-1):
@@ -177,20 +187,14 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
                 ave_E2[a] += E**2
                 ave_E[a] += E
                 ave_M2[a] += get_magnetisation_squared(lattice)
-
-        if save_for_plot and (total_counter in plot_at_Nth_index):
-            lattices_plot[np.where(
-                plot_at_Nth_index == total_counter)[0][0], :, :] = lattice
-            T_history[np.where(
-                plot_at_Nth_index == total_counter)[0][0]] = T_array[a]
-        total_counter += 1
-
+            store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, T_history, T_array[a])
+            total_counter += 1
+        
     ave_M2 = ave_M2/(reduced_extra_time*L**4)
     ave_E2 = ave_E2/(reduced_extra_time)
     ave_E = (ave_E/(reduced_extra_time))**2
     Cv = (ave_E2-ave_E)
     return ave_M2, Cv, lattices_plot, T_history
-
 
 def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename, plot_mode):
     """
@@ -219,6 +223,7 @@ def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename, plot_mode):
             2.) phase_space_arrows
             3.) energy_space_arrows
             4.) phase_and_energy_spaces_arrows
+            5.) phase_and_energy_spaces_noarrows
 
     Returns
     -------
@@ -299,7 +304,22 @@ def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename, plot_mode):
                 im2 = ax2.imshow(E, vmin=-4, vmax=0, cmap='YlOrRd')
                 fig.colorbar(im2, ticks=[-4, -2, 0], ax=ax2)
                 ax2.set_title("Energy, $E$")
-            if plot_mode != 'phase_and_energy_spaces_arrows':
+            elif plot_mode == 'phase_and_energy_spaces_noarrows':
+                E = get_energy_per_spin_per_lattice(
+                    J, lattices_plot[counter, :, :])
+                fig = plt.figure(figsize=(10, 3.7))
+                ax1 = fig.add_subplot(121)
+                ax2 = fig.add_subplot(122)
+                im1 = ax1.imshow(lattices_plot[counter, :, :],
+                                 vmin=-np.pi,
+                                 vmax=np.pi,
+                                 cmap='hsv')
+                fig.colorbar(im1, ticks=[-3.14, 0, 3.14], ax=ax1)
+                ax1.set_title("Phase space, $θ\in(-\pi,\pi)$")
+                im2 = ax2.imshow(E, vmin=-4, vmax=0, cmap='YlOrRd')
+                fig.colorbar(im2, ticks=[-4, -2, 0], ax=ax2)
+                ax2.set_title("Energy, $E$")
+            if (plot_mode != 'phase_and_energy_spaces_arrows') and (plot_mode != 'phase_and_energy_spaces_noarrows'):
                 plt.title(
                     f"Run #{i}. $J$={J}. $T$={np.round(T[counter],2)}. $L$={L}."
                 )
