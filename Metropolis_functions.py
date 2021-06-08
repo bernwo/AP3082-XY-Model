@@ -173,12 +173,12 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
 
     if save_for_plot:
         lattices_plot = np.zeros((len(plot_at_Nth_index), L, L))
-        T_history = np.zeros(len(plot_at_Nth_index))
+        index_history = np.zeros(len(plot_at_Nth_index), dtype=np.int32)
 
     for a in range(T_n):
         for b in range(relaxation_time):
             Metropolis_single_iteration(J, L, lattice, T_array[a])
-            store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, T_history, T_array[a])
+            store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, index_history, a)
             total_counter += 1
         for c in range(extra_time):
             Metropolis_single_iteration(J, L, lattice, T_array[a])
@@ -187,16 +187,16 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
                 ave_E2[a] += E**2
                 ave_E[a] += E
                 ave_M2[a] += get_magnetisation_squared(lattice)
-            store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, T_history, T_array[a])
+            store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, index_history, a)
             total_counter += 1
         
     ave_M2 = ave_M2/(reduced_extra_time*L**4)
     ave_E2 = ave_E2/(reduced_extra_time)
     ave_E = (ave_E/(reduced_extra_time))**2
     Cv = (ave_E2-ave_E)
-    return ave_M2, Cv, lattices_plot, T_history
+    return ave_M2, Cv, lattices_plot, index_history
 
-def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename, plot_mode):
+def creategif(J, L, T, Tc, ave_M2, Cv, plot_at_Nth_index, lattices_plot, index_history, filename, plot_mode):
     """
     Creates an animated .gif of the evolution of the lattice in θ∈[-π,π) space. No temporary files are created as we are utilising RAM.
 
@@ -224,18 +224,16 @@ def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename, plot_mode):
             3.) energy_space_arrows
             4.) phase_and_energy_spaces_arrows
             5.) phase_and_energy_spaces_noarrows
+            6.) phase_and_energy_spaces_noarrows_and_observables
 
     Returns
     -------
         None
     """
-    assert (plot_mode == 'phase_space_noarrows') or (
-        plot_mode
-        == 'phase_space_arrows') or (plot_mode == 'energy_space_arrows') or (
-            plot_mode == 'phase_and_energy_spaces_arrows')
+    assert plot_mode in ['phase_space_noarrows','phase_space_arrows','energy_space_arrows','phase_and_energy_spaces_arrows','phase_and_energy_spaces_noarrows','phase_and_energy_spaces_noarrows_and_observables']
     X, Y = np.mgrid[0:L, 0:L]
     with imageio.get_writer(filename, mode='I') as writer:
-        for counter, i in enumerate(plot_at_Nth_index):
+        for counter, index in enumerate(index_history):
             print(
                 f"Creating gif... {np.round((counter+1)/len(plot_at_Nth_index)*100,2)}%"
             )
@@ -319,13 +317,49 @@ def creategif(J, L, T, plot_at_Nth_index, lattices_plot, filename, plot_mode):
                 im2 = ax2.imshow(E, vmin=-4, vmax=0, cmap='YlOrRd')
                 fig.colorbar(im2, ticks=[-4, -2, 0], ax=ax2)
                 ax2.set_title("Energy, $E$")
-            if (plot_mode != 'phase_and_energy_spaces_arrows') and (plot_mode != 'phase_and_energy_spaces_noarrows'):
+            elif plot_mode == 'phase_and_energy_spaces_noarrows_and_observables':
+                E = get_energy_per_spin_per_lattice(
+                    J, lattices_plot[counter, :, :])
+                fig = plt.figure(figsize=(10, 8))
+                ax1 = fig.add_subplot(221)
+                ax2 = fig.add_subplot(222)
+                ax3 = fig.add_subplot(223)
+                ax4 = fig.add_subplot(224)
+
+                im1 = ax1.imshow(lattices_plot[counter, :, :],
+                                 vmin=-np.pi,
+                                 vmax=np.pi,
+                                 cmap='hsv')
+                fig.colorbar(im1, ticks=[-3.14, 0, 3.14], ax=ax1)
+                ax1.set_title("Phase space, $θ\in(-\pi,\pi)$")
+                im2 = ax2.imshow(E, vmin=-4, vmax=0, cmap='YlOrRd')
+                fig.colorbar(im2, ticks=[-4, -2, 0], ax=ax2)
+                ax2.set_title("Energy, $E$")
+
+                ax3.plot(T/Tc, ave_M2, 'r-')
+                ax3.plot( T[index]/Tc , ave_M2[index] , 'ro', markersize=15)
+                ax3.set_xlabel("$T/T_c$")
+                ax3.set_ylabel("$\langle M^2\\rangle/N^2$")
+                ax3.set_ylim([0,1])
+                ax3.set_xlim([T[0]/Tc,T[-1]/Tc])
+                ax3.grid()
+                ax3.set_title("Magnetisation squared, $\langle M^2\\rangle/N^2$")
+
+                ax4.plot( T/Tc , Cv/((L**2*T**2)) , 'g-')
+                ax4.plot( T[index]/Tc , Cv[index]/((L**2*T[index]**2)) , 'go', markersize=15)
+                ax4.set_xlabel("$T/T_c$")
+                ax4.set_ylabel("$c/k_B$")
+                ax4.set_ylim([0,2])
+                ax4.set_xlim([T[0]/Tc,T[-1]/Tc])
+                ax4.grid()
+                ax4.set_title("Specific heat capacity per spin, $c/k_B$")
+            if (plot_mode != 'phase_and_energy_spaces_arrows') and (plot_mode != 'phase_and_energy_spaces_noarrows') and (plot_mode != 'phase_and_energy_spaces_noarrows_and_observables'):
                 plt.title(
-                    f"Run #{i}. $J$={J}. $T$={np.round(T[counter],2)}. $L$={L}."
+                    f"Run #{plot_at_Nth_index[counter]}. $J$={J}. $T/T_c$={np.round(T[index]/Tc,2)}. $L$={L}."
                 )
             else:
                 fig.suptitle(
-                    f"Run #{i}. $J$={J}. $T$={np.round(T[counter],2)}. $L$={L}."
+                    f"Run #{plot_at_Nth_index[counter]}. $J$={J}. $T/T_c$={np.round(T[index]/Tc,2)}. $L$={L}."
                 )
             buf = io.BytesIO()
             plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
