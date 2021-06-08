@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from Observables_functions import get_energy_per_spin_per_lattice
+from scipy.ndimage import convolve
 
-def get_clusters(array):
+def get_cluster_borders(array):
     """
     Get the positions of each cluster in array.
     
@@ -15,9 +16,38 @@ def get_clusters(array):
     nd.array: positions ordered by columns
     """
     addresses_clusters = []
-    for i in range(1, np.max(array)+1):
-        addresses_clusters.append(np.transpose(np.where(array == i)))
-    return addresses_clusters
+    borders_clusters = []
+    for i in range(1,np.max(array)+1):
+        cluster = np.where(array == i)
+        borders_clusters.append(get_borders(positions=cluster, L=len(array)))
+    return borders_clusters
+
+    
+
+def get_borders(positions, L):
+    """
+    A cluster is represented as zeros and ones in a numpy array.
+    This function finds the border of a cluster and returns the position
+    of every element of the border.
+    """
+    #print(positions)
+    if len(positions[0]) == 1:
+        #print(positions)
+        return np.array(positions).flatten()
+    else:
+        cluster = np.zeros((L,L))
+        borders = np.zeros((L,L))
+        cluster[positions] = 1
+        kernel = np.array([[0, 1, 0],[1, 0, 1],[0, 1, 0]])
+        neighbour_sums = convolve(cluster, kernel, mode='wrap')
+        borders[np.where(neighbour_sums == 1)] = 1
+        borders[np.where(neighbour_sums == 2)] = 1
+        borders[np.where(neighbour_sums == 3)] = 1
+        borders = borders*cluster
+        border = np.where(borders != 0)
+        #print('border: '+str(border))
+        return np.array(border).T
+
 
 
 def temp_prob(temperature, J=1):
@@ -36,7 +66,15 @@ def get_random_cluster_element(addresses):
     Returns a random element of a list addresses.
     """
     length = len(addresses)
-    return addresses[np.random.choice(range(length))]
+    #print('addresses: '+str(addresses))
+    if len(np.shape(addresses)) == 1:
+        #print('normal element: '+str(addresses))
+        return addresses
+    
+    else:
+        element = addresses[np.random.choice(len(addresses))]
+        #print('border element: '+str(element))
+        return element
 
 
 def get_random_neighbor(array=[[0, 1], [0, -1], [1, 0], [-1, 0]]):
@@ -44,34 +82,6 @@ def get_random_neighbor(array=[[0, 1], [0, -1], [1, 0], [-1, 0]]):
     Returns a random element from array.
     """
     return np.array(array[np.random.choice(range(len(array)))])
-
-
-def propagate(array, boolean_array, center, direction):
-    """
-    Execute round of propagation in array for a single cluster.
-    
-    Parameters:
-    ----------
-    array: nd.darray
-    boolean_array: nd.darray
-    center: nd.array
-    direction: n.array
-
-    Returns:
-    -------
-    array: nd.array
-    boolean_array: 
-    """
-    initial = index_format(center)
-    final = index_format((center+direction) % len(array))
-
-    if boolean_array[final] and boolean_array[initial]:
-        if not array[initial][0] == array[final][0]:
-            array[np.where(array == array[final])] = array[initial]
-            boolean_array[initial] = False
-            boolean_array[final] = False
-            #array = relabel_clusters(array)
-    return array, boolean_array
 
 
 def propagate_xy(array, boolean_array, spins, random_vector, center, direction, temperature):
@@ -102,11 +112,11 @@ def propagation_round_xy(array, spins, random_vector, temperature):
     Propagate all the clusters in an array a single time according to the xy model.
     """
     #print('propagation round...')
-
+    # Initialize boolean array at the beggining of the round
     boolean_array = array < np.max(array)+1
-    cluster_addresses = get_clusters(array)
+    cluster_addresses = get_cluster_borders(array)
     random_elements = [get_random_cluster_element(cluster_addresses[i]) for i in range(len(cluster_addresses))]
-
+    #print(random_elements)
     for element in random_elements:
         direction = get_random_neighbor()
 
@@ -128,8 +138,11 @@ def propagation_round(array, p):
     Propagate all the clusters in an array a single time according to a percolation model with probability p.
     """
     boolean_array = array < np.max(array)+1
-    cluster_addresses = get_clusters(array)
-    random_elements = [get_random_cluster_element(cluster_addresses[i]) for i in range(len(cluster_addresses))]
+    cluster_elements = get_cluster_borders(array)
+    #print('cluster elements: '+str(cluster_elements))
+    #cluster_elements = np.delete(cluster_elements, np.where(len(cluster_elements) == 1))
+    random_elements = [get_random_cluster_element(element) for element in cluster_elements][1::]
+    #print('random elements: '+str(random_elements))
 
     for element in random_elements:
         direction = get_random_neighbor()
@@ -142,6 +155,36 @@ def propagation_round(array, p):
     array = relabel_clusters(array)
 
     return array
+
+
+def propagate(array, boolean_array, center, direction):
+    """
+    Execute round of propagation in array for a single cluster.
+    
+    Parameters:
+    ----------
+    array: nd.darray
+    boolean_array: nd.darray
+    center: nd.array
+    direction: n.array
+
+    Returns:
+    -------
+    array: nd.array
+    boolean_array: 
+    """
+    #center = np.array(center).flatten()
+    #print('center: '+str(center))
+    initial = index_format(center)
+    final = index_format((center+direction) % len(array))
+    
+    if boolean_array[final] and boolean_array[initial]:
+        if not array[initial][0] == array[final][0]:
+            array[np.where(array == array[final])] = array[initial]
+            boolean_array[initial] = False
+            boolean_array[final] = False
+            #array = relabel_clusters(array)
+    return array, boolean_array
 
 
 def spins_aligned(element, direction, spins, random_vector):
@@ -182,11 +225,11 @@ def percolation(invaded):
     """
     Check if percolation happened in invaded. That is, check if there is a cluster
     spanning the lattice along a given direction.
-    
+
     Parameters:
     ----------
     invaded: nd.array
-    
+
     Returns:
     -------
     boolean
@@ -285,20 +328,20 @@ def get_temperature(spins):
 def percolation_model(L, p):
     """
     Execute percolation model with probability p on a lattice of size L x L.
-    
+
     Parameters:
     ----------
     L: int
     P:float
-    
+
     Returns:
     -------
     ims: nd.darray of plt.axes objects
     invaded: np.darray
     """
-    invaded = np.resize(np.arange(1, L*L), (L,L))
+    invaded = np.resize(np.arange(1, L*L+1), (L,L))
     ims = [[plt.imshow(invaded, animated=True)]]
-    step = 1
+    #step = 1
     perc = False
     while not perc:
         invaded = propagation_round(invaded, p)
