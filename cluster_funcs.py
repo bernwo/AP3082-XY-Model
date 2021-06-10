@@ -114,8 +114,10 @@ def propagation_round_xy(array, spins, random_vector, temperature):
     #print('propagation round...')
     # Initialize boolean array at the beggining of the round
     boolean_array = array < np.max(array)+1
-    cluster_addresses = get_cluster_borders(array)
-    random_elements = [get_random_cluster_element(cluster_addresses[i]) for i in range(len(cluster_addresses))]
+    cluster_elements = get_cluster_borders(array)
+    #print('cluster elements: '+str(cluster_elements))
+    #cluster_elements = np.delete(cluster_elements, np.where(len(cluster_elements) == 1))
+    random_elements = [get_random_cluster_element(element) for element in cluster_elements][1::]
     #print(random_elements)
     for element in random_elements:
         direction = get_random_neighbor()
@@ -132,6 +134,38 @@ def propagation_round_xy(array, spins, random_vector, temperature):
 
     return array
 
+
+def sweden_wang_cluster(spins, p, random_vector):
+
+    L = len(spins)
+    array = np.resize(np.arange(1, L*L+1), (L, L))
+
+    cluster_elements = get_cluster_borders(array)
+
+    random_elements = [get_random_cluster_element(element) for element in cluster_elements][1::]
+    neighbors = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
+
+    for element in random_elements:
+        for neighbor in neighbors:
+
+            initial = index_format(element)
+            final = index_format((element+neighbor) % len(array))
+            if spins_aligned(element, neighbor, spins, random_vector):
+                if not array[initial][0] == array[final][0]:
+                    if np.random.rand() < p:
+                        array[np.where(array == array[final])] = array[initial]
+
+    return array
+
+
+def sweden_wang_evolution(spins, temperature, J=1):
+
+    random_vector = get_vector_components(2*np.pi*np.random.rand())
+    p = 1 - np.exp(-J/temperature)
+    clusters = sweden_wang_cluster(spins, p, random_vector)
+    spins = rotate_percolated_cluster(spins, clusters, random_vector)
+
+    return spins
 
 def propagation_round(array, p):
     """
@@ -283,7 +317,7 @@ def xy_model(L, n_steps=1):
     n_step for temperature.
     """
     spins = 2*np.pi*np.random.rand(L, L)
-    invaded = np.resize(np.arange(1, L*L), (L, L))
+    invaded = np.resize(np.arange(1, L*L+1), (L, L))
     temperature = 1E-10
     ts = []
     ims = []
