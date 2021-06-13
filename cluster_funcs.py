@@ -6,11 +6,11 @@ from scipy.ndimage import convolve
 def get_cluster_borders(array):
     """
     Get the positions of each cluster in array.
-    
+
     Parameters:
     -----------
     array: nd.array
-    
+
     Returns:
     -------
     nd.array: positions ordered by columns
@@ -22,7 +22,7 @@ def get_cluster_borders(array):
         borders_clusters.append(get_borders(positions=cluster, L=len(array)))
     return borders_clusters
 
-    
+
 
 def get_borders(positions, L):
     """
@@ -56,7 +56,7 @@ def temp_prob(temperature, J=1):
 
 def index_format(direction):
     """
-    Position in matrix transformed for use in 
+    Position in matrix transformed for use in
     """
     return np.split(direction, 2)
 
@@ -70,7 +70,7 @@ def get_random_cluster_element(addresses):
     if len(np.shape(addresses)) == 1:
         #print('normal element: '+str(addresses))
         return addresses
-    
+
     else:
         element = addresses[np.random.choice(len(addresses))]
         #print('border element: '+str(element))
@@ -135,37 +135,72 @@ def propagation_round_xy(array, spins, random_vector, temperature):
     return array
 
 
-def sweden_wang_cluster(spins, p, random_vector):
+def sweden_wang_cluster(spins, p, random_vector, temp):
 
     L = len(spins)
     array = np.resize(np.arange(1, L*L+1), (L, L))
-
+    boolean_array = array < np.max(array)+1
     cluster_elements = get_cluster_borders(array)
 
-    random_elements = [get_random_cluster_element(element) for element in cluster_elements][1::]
+    random_elements = [get_random_cluster_element(element) for element in cluster_elements]
     neighbors = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
 
     for element in random_elements:
+        initial = index_format(element)
         for neighbor in neighbors:
-
-            initial = index_format(element)
             final = index_format((element+neighbor) % len(array))
-            if spins_aligned(element, neighbor, spins, random_vector):
-                if not array[initial][0] == array[final][0]:
-                    if np.random.rand() < p:
+
+            # Check if the site to move to hasn't been already used
+            # Check if they are already in the same cluster
+            if boolean_array[final] and not array[initial] == array[final]:
+
+                spins_projection = spins_aligned(element, neighbor, spins, random_vector)
+
+                if spins_projection > 0:
+
+                    if np.random.rand() < get_probability(temp, spins_projection):
+
                         array[np.where(array == array[final])] = array[initial]
+                        #array[final] = array[initial]
+        boolean_array[initial] = False
+
+    return array
+
+def get_probability(temp, spins_pojection, J=1):
+    #print(spins_pojection)
+    p = 1 - np.exp(-2*J*spins_pojection/temp)
+    return p
+
+def sweden_wang_evolution(spins, temperature):
+
+    random_vector = get_vector_components(2*np.pi*np.random.rand())
+    clusters = sweden_wang_cluster(spins, temperature, random_vector, temperature)
+    spins = rotate_percolated_cluster(spins, clusters, random_vector)
+
+    return spins
+
+
+def percolation_cluster(p, L):
+
+    array = np.resize(np.arange(1, L*L+1), (L, L))
+    boolean_array = array < np.max(array)+1
+    cluster_elements = get_cluster_borders(array)
+
+    random_elements = [get_random_cluster_element(element) for element in cluster_elements][1::]
+    neighbors = np.array([[0, -1], [1, 0], [-1, 0], [0, 1]])
+
+    for element in random_elements:
+        initial = index_format(element)
+        for neighbor in neighbors:
+            final = index_format((element+neighbor) % len(array))
+            if boolean_array[final] and not array[initial][0] == array[final][0]:
+                if np.random.rand() < p:
+                    array[np.where(array == array[final])] = array[initial]
+        boolean_array[initial] = False
 
     return array
 
 
-def sweden_wang_evolution(spins, temperature, J=1):
-
-    random_vector = get_vector_components(2*np.pi*np.random.rand())
-    p = 1 - np.exp(-J/temperature)
-    clusters = sweden_wang_cluster(spins, p, random_vector)
-    spins = rotate_percolated_cluster(spins, clusters, random_vector)
-
-    return spins
 
 def propagation_round(array, p):
     """
@@ -194,7 +229,7 @@ def propagation_round(array, p):
 def propagate(array, boolean_array, center, direction):
     """
     Execute round of propagation in array for a single cluster.
-    
+
     Parameters:
     ----------
     array: nd.darray
@@ -205,13 +240,13 @@ def propagate(array, boolean_array, center, direction):
     Returns:
     -------
     array: nd.array
-    boolean_array: 
+    boolean_array:
     """
     #center = np.array(center).flatten()
     #print('center: '+str(center))
     initial = index_format(center)
     final = index_format((center+direction) % len(array))
-    
+
     if boolean_array[final] and boolean_array[initial]:
         if not array[initial][0] == array[final][0]:
             array[np.where(array == array[final])] = array[initial]
@@ -230,7 +265,7 @@ def spins_aligned(element, direction, spins, random_vector):
     direction: nd.array
     spins: nd.darray
     random_vector: nd.array
-    
+
     Returns:
     -------
     boolean
@@ -242,13 +277,8 @@ def spins_aligned(element, direction, spins, random_vector):
 
     proj1 = np.dot(get_vector_components(spins[initial]).flatten(), random_vector)
     proj2 = np.dot(get_vector_components(spins[final]).flatten(), random_vector)
-    
 
-    if proj1*proj2 > 0:
-        return True
-    else:
-        return False
-
+    return proj1*proj2
 
 def get_vector_components(angle):
     """Get x and y components of a unit vector with angle"""
@@ -289,11 +319,11 @@ def relabel_clusters(array):
     At the end of a propagation round, clusters label reorders the cluster from
     1 to the total number of clusters than can be found by the number of different
     elements in array.
-    
+
     Parameters:
     ----------
     array: nd.array
-    
+
     Returns:
     -------
     array: nd.array
@@ -313,7 +343,7 @@ def relabel_clusters(array):
 
 def xy_model(L, n_steps=1):
     """
-    Executes IC algorithm for xy model of size L x L during 
+    Executes IC algorithm for xy model of size L x L during
     n_step for temperature.
     """
     spins = 2*np.pi*np.random.rand(L, L)
@@ -346,11 +376,25 @@ def rotate_percolated_cluster(spins, invaded, random_vector):
     Rotate spins for each cluster from invaded around random vector
     with probability 1/2.
     """
-    random_angle = np.arctan(random_vector[1]/random_vector[0])
+    random_angle = np.arctan(random_vector[0]/random_vector[1])
     for i in range(np.max(invaded.flatten())):
         if np.random.rand() < 1/2:
             spins[np.where(invaded == i+1)] += random_angle
     spins = spins % (2*np.pi)
+    return spins
+
+def rotate_clusters(spins, invaded, random_vector):
+    """
+    Rotate spins for each cluster from invaded around random vector
+    with probability 1/2.
+    """
+    x, y = random_vector
+    rot_mat = np.array([[x,-y],[y,x]])
+    for i in range(int(np.max(invaded.flatten()))):
+        if np.random.rand() < 1/2:
+            spins_vec = get_vector_components(spins[np.where(invaded == i+1)][0][0])
+            spins[np.where(invaded == i+1)] = rot_mat.dot(spins[np.where(invaded == i+1)].T).T
+
     return spins
 
 

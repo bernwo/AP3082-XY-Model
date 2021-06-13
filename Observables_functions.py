@@ -10,7 +10,7 @@ def get_magnetisation_squared(lattice):
     ----------
         lattice: np.ndarray (float)
             The input lattice containing L×L spins.
-    
+
     Returns
     -------
         M2: float
@@ -28,13 +28,13 @@ def get_energy(J, L, lattice):
     ----------
 		J: float
             Coupling constant. It must follow that J>0 such that we are studying the ferromagnetic XY-model.
-        
+
         L: int
             Lattice size where the total number of spins is given by L×L.
-		
+
         lattice: np.ndarray (float)
             The input lattice containing L×L spins.
-    
+
     Returns
     -------
         E: float
@@ -51,6 +51,7 @@ def get_energy(J, L, lattice):
 	E = np.sum(e)
 	return E
 
+
 def get_energy_per_spin_per_lattice(J, lattice):
 	"""
 	Calculates and returns the energy of each spin in the lattice.
@@ -59,7 +60,7 @@ def get_energy_per_spin_per_lattice(J, lattice):
 	----------
 		J: float
 			Coupling constant. It must follow that J>0 such that we are studying the ferromagnetic XY-model.
-		
+
 		lattice: np.ndarray (float)
 			The input lattice containing L×L spins.
 
