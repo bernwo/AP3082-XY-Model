@@ -182,7 +182,7 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
         for b in range(relaxation_time):
             Metropolis_single_iteration(J, L, lattice, T_array[a])
             #store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, index_history, a)
-            total_counter += 1
+            # total_counter += 1
         for c in range(extra_time):
             Metropolis_single_iteration(J, L, lattice, T_array[a])
             if not(c==0) and (c%reduced_interval==0 or c==extra_time-1):
