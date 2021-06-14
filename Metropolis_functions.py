@@ -108,11 +108,14 @@ def Metropolis_single_iteration(J, L, lattice, T):
             lattice[i, j] = new_phi
 
 @jit(nopython=True)
-def store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, T_history, T):
+def store_lattice_for_plotting(save_for_plot, total_counter, plot_at_Nth_index, lattices_plot, lattice, index_history, T):
+    """
+    Stores lattice into array for plotting.
+    """
     if save_for_plot and (total_counter in plot_at_Nth_index):
         lattices_plot[np.where(
             plot_at_Nth_index == total_counter)[0][0], :, :] = lattice
-        T_history[np.where(
+        index_history[np.where(
             plot_at_Nth_index == total_counter)[0][0]] = T
 
 @jit(nopython=True)
@@ -132,6 +135,9 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
 
         relaxation_time: int
             The number of Metropolis evolution time-steps one applies to the lattice for a given temperature T before changing the temperature.
+        
+        extra_time: int
+            The number of Metropolis evolution time-steps one applies ot the lattice after the relaxation_time.
 
         lattice: np.ndarray (float)
             The input lattice containing L×L spins.
@@ -147,19 +153,27 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
 
         plot_at_Nth_index: np.ndarray (int)
             Specifies at which Metropolis evolution time-steps to save the lattice snapshot for plotting purposes.
+        
+        save_for_plot: bool
+            Specifies whether to store the lattices for plotting purposes.
 
     Returns
     -------
-        lattices_tau: np.ndarray (float)
-            A numpy array of shape (T_n,L,L). It stores the snapshot of the lattice after relaxation ends for each temperature points, specified by T_array.
-            This is used for studying physical observables of the system.
+        ave_M2: np.ndarray (float)
+            The normalised magnetisation squared.
+
+        ave_E: np.ndarray (float)
+            The mean of energy.
+
+        ave_E2:
+            The mean of energy squared.
 
         lattices_plot: np.ndarray (float)
             A numpy array of shape (len(plot_at_Nth_index),L,L). It stores the snapshot of the lattice at time-steps specified by plot_at_Nth_index.
             This is used for plotting the evolution of the lattice.
 
-        T_history: np.ndarray (float)
-            A numpy array of shape (len(plot_at_Nth_index),). It stores the temperature of the system at time-steps specified by plot_at_Nth_index.
+        index_history: np.ndarray (float)
+            A numpy array of shape (len(plot_at_Nth_index),). It stores the index of the system at time-steps specified by plot_at_Nth_index.
             This is used for plotting the evolution of the lattice.
     """
     T_array = np.linspace(T_init, T_final, T_n)  # In units of kB
@@ -195,8 +209,6 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
             total_counter += 1
 
     ave_M2 = ave_M2/(L**4)
-    ave_E2 = ave_E2
-    ave_E = ave_E
     #Cv = (ave_E2-ave_E)
     return ave_M2, ave_E, ave_E2, lattices_plot, index_history
 
@@ -216,8 +228,24 @@ def creategif(J, L, T, Tc, ave_M2, Cv, plot_at_Nth_index, lattices_plot, index_h
         T: np.ndarray (float)
             A numpy array of shape (len(plot_at_Nth_index),). It stores the temperature of the system at time-steps specified by plot_at_Nth_index.
 
+        Tc: float
+            The critical temperature.
+        
+        ave_M2: np.ndarray (float)
+            The normalised magnetisation squared.
+
+        Cv: np.ndarray (float)
+            The specific heat capacity.
+
+        plot_at_Nth_index: np.ndarray (int)
+            Specifies at which Metropolis evolution time-steps to save the lattice snapshot for plotting purposes.
+        
         lattices_plot: np.ndarray (float)
             A numpy array of shape (len(plot_at_Nth_index),L,L). It stores the snapshot of the lattice at time-steps specified by plot_at_Nth_index.
+
+        index_history: np.ndarray (float)
+            A numpy array of shape (len(plot_at_Nth_index),). It stores the index of the system at time-steps specified by plot_at_Nth_index.
+            This is used for plotting the evolution of the lattice.
 
         filename: string
             Specifies the filename of the .gif to be saved.
