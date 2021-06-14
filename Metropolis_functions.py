@@ -200,6 +200,7 @@ def Metropolis(J, L, relaxation_time, extra_time, lattice,
     #Cv = (ave_E2-ave_E)
     return ave_M2, ave_E, ave_E2, lattices_plot, index_history
 
+
 def creategif(J, L, T, Tc, ave_M2, Cv, plot_at_Nth_index, lattices_plot, index_history, filename, plot_mode):
     """
     Creates an animated .gif of the evolution of the lattice in θ∈[-π,π) space. No temporary files are created as we are utilising RAM.
